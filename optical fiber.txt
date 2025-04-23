@@ -1,0 +1,310 @@
+pip install django pysnmp paramiko mysqlclient
+
+omss/
+??? backend/
+?   ??? alarms/
+?   ??? monitoring/
+?   ??? config/
+?   ??? users/
+?   ??? manage.py
+??? frontend/
+?   ??? (React App)
+
+
+
+# alarms/snmp_trap_receiver.py
+from pysnmp.hlapi.asyncore import *
+
+def trap_receiver():
+    def callback(snmp_engine, state_ref, context_engine_id, context_name,
+                 var_binds, cb_ctx):
+        for name, val in var_binds:
+            print(f'TRAP received: {name.prettyPrint()} = {val.prettyPrint()}')
+            # Save to DB logic here
+
+    snmp_engine = SnmpEngine()
+    config.addTransport(
+        snmp_engine,
+        udp.domainName,
+        udp.UdpTransport().openServerMode(('0.0.0.0', 162))
+    )
+    config.addV1System(snmp_engine, 'my-agent', 'public')
+    ntfrcv.NotificationReceiver(snmp_engine, callback)
+    snmp_engine.transportDispatcher.jobStarted(1)
+    snmp_engine.transportDispatcher.runDispatcher()
+
+
+
+# monitoring/cli_interface.py
+import paramiko
+
+def execute_command(host, username, password, command):
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(host, username=username, password=password)
+    stdin, stdout, stderr = ssh.exec_command(command)
+    output = stdout.read().decode()
+    ssh.close()
+    return output
+
+
+
+# monitoring/cli_interface.py
+import paramiko
+
+def execute_command(host, username, password, command):
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(host, username=username, password=password)
+    stdin, stdout, stderr = ssh.exec_command(command)
+    output = stdout.read().decode()
+    ssh.close()
+    return output
+
+
+
+
+
+
+
+# alarms/models.py
+from django.db import models
+
+class Alarm(models.Model):
+    timestamp = models.DateTimeField(auto_now_add=True)
+    source = models.CharField(max_length=255)
+    severity = models.CharField(max_length=50)
+    description = models.TextField()
+
+
+
+
+npx create-react-app frontend
+cd frontend
+npm install bootstrap axios
+
+
+
+
+
+
+// src/components/AlarmDashboard.js
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+
+const AlarmDashboard = () => {
+    const [alarms, setAlarms] = useState([]);
+
+    useEffect(() => {
+        axios.get('/api/alarms/').then(res => setAlarms(res.data));
+    }, []);
+
+    return (
+        <div className="container">
+            <h2 className="my-4">SDH Alarms</h2>
+            <table className="table table-striped">
+                <thead>
+                    <tr><th>Time</th><th>Source</th><th>Severity</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                    {alarms.map(alarm => (
+                        <tr key={alarm.id}>
+                            <td>{alarm.timestamp}</td>
+                            <td>{alarm.source}</td>
+                            <td>{alarm.severity}</td>
+                            <td>{alarm.description}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+};
+
+export default AlarmDashboard;
+
+
+
+
+
+
+
+services:
+  web:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  db:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: omss
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+
+
+
+
+
+
+
+
+
+
+Great! Here's a modular and practical code structure for implementing the OMSS for an SDH Optical Fiber Transmission Network using:
+* Backend: Python + Django
+* Frontend: React + Bootstrap
+* Database: MySQL
+* SDH Communication: SNMP & SSH/Telnet
+* Deployment: On-premise with high availability considerations
+
+?? 1. Backend Setup (Django + SNMP/SSH Integration)
+Install dependencies
+bash
+CopyEdit
+pip install django pysnmp paramiko mysqlclient
+Project structure
+arduino
+CopyEdit
+omss/
+??? backend/
+?   ??? alarms/
+?   ??? monitoring/
+?   ??? config/
+?   ??? users/
+?   ??? manage.py
+??? frontend/
+?   ??? (React App)
+
+Alarms Module - SNMP Listener (pysnmp)
+python
+CopyEdit
+# alarms/snmp_trap_receiver.py
+from pysnmp.hlapi.asyncore import *
+
+def trap_receiver():
+    def callback(snmp_engine, state_ref, context_engine_id, context_name,
+                 var_binds, cb_ctx):
+        for name, val in var_binds:
+            print(f'TRAP received: {name.prettyPrint()} = {val.prettyPrint()}')
+            # Save to DB logic here
+
+    snmp_engine = SnmpEngine()
+    config.addTransport(
+        snmp_engine,
+        udp.domainName,
+        udp.UdpTransport().openServerMode(('0.0.0.0', 162))
+    )
+    config.addV1System(snmp_engine, 'my-agent', 'public')
+    ntfrcv.NotificationReceiver(snmp_engine, callback)
+    snmp_engine.transportDispatcher.jobStarted(1)
+    snmp_engine.transportDispatcher.runDispatcher()
+
+SSH Integration - Paramiko for CLI Access
+python
+CopyEdit
+# monitoring/cli_interface.py
+import paramiko
+
+def execute_command(host, username, password, command):
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(host, username=username, password=password)
+    stdin, stdout, stderr = ssh.exec_command(command)
+    output = stdout.read().decode()
+    ssh.close()
+    return output
+
+Django Models (Simplified)
+python
+CopyEdit
+# alarms/models.py
+from django.db import models
+
+class Alarm(models.Model):
+    timestamp = models.DateTimeField(auto_now_add=True)
+    source = models.CharField(max_length=255)
+    severity = models.CharField(max_length=50)
+    description = models.TextField()
+
+??? 2. Frontend Setup (React + Bootstrap)
+Install dependencies
+bash
+CopyEdit
+npx create-react-app frontend
+cd frontend
+npm install bootstrap axios
+Sample Dashboard Page
+jsx
+CopyEdit
+// src/components/AlarmDashboard.js
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+
+const AlarmDashboard = () => {
+    const [alarms, setAlarms] = useState([]);
+
+    useEffect(() => {
+        axios.get('/api/alarms/').then(res => setAlarms(res.data));
+    }, []);
+
+    return (
+        <div className="container">
+            <h2 className="my-4">SDH Alarms</h2>
+            <table className="table table-striped">
+                <thead>
+                    <tr><th>Time</th><th>Source</th><th>Severity</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                    {alarms.map(alarm => (
+                        <tr key={alarm.id}>
+                            <td>{alarm.timestamp}</td>
+                            <td>{alarm.source}</td>
+                            <td>{alarm.severity}</td>
+                            <td>{alarm.description}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+};
+
+export default AlarmDashboard;
+
+?? 3. Deployment Strategy
+High Availability
+* Use Docker Compose with services: Django, MySQL, React frontend, Redis (if needed)
+* Add Nginx as reverse proxy with HTTPS and load balancing
+* Use supervisord or systemd to restart critical daemons (e.g., SNMP listener)
+Docker Compose (Simplified)
+yaml
+CopyEdit
+services:
+  web:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  db:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: omss
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+
+Would you like help generating the full code base or just certain modules like the SNMP trap server, alarm dashboard, or CLI automation?
+4o
+
